@@ -1,9 +1,17 @@
 #include "board.h"
+#include "ui.h"
 #include "conio2.h"
 #include <stdio.h>
 
 
-// Initializes the board with starting pawn positions
+
+#define ANSI_RESET "\x1b[0m"
+#define ANSI_BG_BROWN "\x1b[48;5;130m"
+#define ANSI_RED_PAWN "\x1b[31;1m"
+#define ANSI_WHT_PAWN "\x1b[37;1m"
+#define ANSI_FRAME "\x1b[33m"
+
+// Initialize board with starting pawns
 void BoardInitialization(Pawns Board[]) {
     for (int i = 0; i <= MAXFIELDS; ++i) {
         Board[i].WhitePawns = 0;
@@ -19,246 +27,98 @@ void BoardInitialization(Pawns Board[]) {
     Board[24].RedPawns = 2;
 }
 
-// Internal helper functions (not declared in the header)
-void DrawCourt(Pawns Board[]) {
-    gotoxy(57, 12);
-    textcolor(COLORONE);
-    printf("Pawns in  Red  Court: %d", Board[COURT].RedPawns);
-    gotoxy(57, 16);
-    textcolor(COLORTWO);
-    printf("Pawns in White Court: %d", Board[COURT].WhitePawns);
-    textcolor(BASECOLOR);
+// Print a single pawn or empty space
+void DrawPawnSlot(int red, int white, int currentLevel) {
+    if (red >= currentLevel) {
+        printf(ANSI_RED_PAWN "(X)" ANSI_RESET);
+    }
+    else if (white >= currentLevel) {
+        printf(ANSI_WHT_PAWN "(X)" ANSI_RESET);
+    }
+    else {
+        printf(ANSI_BG_BROWN " | " ANSI_RESET);
+    }
 }
 
-void DrawBar(Pawns Board[]) {
-    int Bar = 15;
+// Draw the top half of the board
+void DrawTopHalf(Pawns Board[]) {
+    int startY = POS_Y_BOARD_TOP;
 
+    gotoxy(POS_X_BOARD, startY++);
+    printf(ANSI_FRAME " 13  14  15  16  17  18   XX    19  20  21  22  23  24 " ANSI_RESET);
+    gotoxy(POS_X_BOARD, startY++);
+    printf(ANSI_FRAME "==========================================================" ANSI_RESET);
+
+    for (int level = 1; level <= 6; ++level) {
+        gotoxy(POS_X_BOARD, startY++);
+        for (int i = 13; i <= 18; ++i) {
+            DrawPawnSlot(Board[i].RedPawns, Board[i].WhitePawns, level);
+            printf(" ");
+        }
+
+        printf(ANSI_FRAME "  ||   " ANSI_RESET);
+
+        for (int i = 19; i <= 24; ++i) {
+            DrawPawnSlot(Board[i].RedPawns, Board[i].WhitePawns, level);
+            printf(" ");
+        }
+    }
+}
+
+// Draw the bottom half of the board
+void DrawBottomHalf(Pawns Board[]) {
+    int startY = POS_Y_BOARD_BOT;
+
+    gotoxy(POS_X_BOARD, startY++);
+    printf(ANSI_FRAME "----------------------------------------------------------" ANSI_RESET);
+
+    for (int level = 6; level >= 1; --level) {
+        gotoxy(POS_X_BOARD, startY++);
+        for (int i = 12; i >= 7; --i) {
+            DrawPawnSlot(Board[i].RedPawns, Board[i].WhitePawns, level);
+            printf(" ");
+        }
+
+        printf(ANSI_FRAME "  ||   " ANSI_RESET);
+
+        for (int i = 6; i >= 1; --i) {
+            DrawPawnSlot(Board[i].RedPawns, Board[i].WhitePawns, level);
+            printf(" ");
+        }
+    }
+
+    gotoxy(POS_X_BOARD, startY++);
+    printf(ANSI_FRAME "==========================================================" ANSI_RESET);
+    gotoxy(POS_X_BOARD, startY++);
+    printf(ANSI_FRAME " 12  11  10   9   8   7   XX    6   5   4   3   2   1 " ANSI_RESET);
+}
+
+// Draw captured pawns on the bar
+void DrawBarState(Pawns Board[]) {
+    gotoxy(POS_X_BAR, POS_Y_BAR_W);
     if (Board[BAR].WhitePawns > 0) {
-        Bar -= Board[BAR].WhitePawns;
+        printf(ANSI_WHT_PAWN "W:%d" ANSI_RESET, Board[BAR].WhitePawns);
     }
+    gotoxy(POS_X_BAR, POS_Y_BAR_R);
     if (Board[BAR].RedPawns > 0) {
-        Bar -= Board[BAR].RedPawns;
-    }
-
-    int x = 28;
-    int y = 7;
-
-    gotoxy(x, y);
-
-    for (int i = 0; i < Board[BAR].WhitePawns; ++i) {
-        textcolor(COLORTWO);
-        printf("xx");
-        gotoxy(x, ++y);
-    }
-
-    for (int i = 0; i < Bar; ++i) {
-        textcolor(BASECOLOR);
-        printf("||");
-        gotoxy(x, ++y);
-    }
-
-    for (int i = 0; i < Board[BAR].RedPawns; ++i) {
-        textcolor(COLORONE);
-        printf("xx");
-        gotoxy(x, ++y);
-    }
-
-    textcolor(BASECOLOR);
-}
-
-void WhiteHome(Pawns Board[]) {
-    int x = 32;
-    int y = 21;
-
-    for (int i = 6; i >= 1; --i) {
-        int ToPrint = 0;
-
-        if (Board[i].WhitePawns > 0) {
-            ToPrint = Board[i].WhitePawns;
-            textcolor(COLORTWO);
-        }
-        else if (Board[i].RedPawns > 0) {
-            ToPrint = Board[i].RedPawns;
-            textcolor(COLORONE);
-        }
-
-        int limit = (ToPrint < 6) ? ToPrint : 6;
-
-        for (int j = 0; j < limit; ++j) {
-            gotoxy(x, y);
-            printf("XX\n");
-            y--;
-        }
-
-        for (int j = 0; j < 6 - ToPrint; ++j) {
-            textcolor(BASECOLOR);
-            gotoxy(x, y);
-            printf("/\\\n");
-            y--;
-        }
-
-        gotoxy(x, y);
-        printf("N%d", ToPrint);
-        textcolor(BASECOLOR);
-        x += 4;
-        y += 6;
+        printf(ANSI_RED_PAWN "R:%d" ANSI_RESET, Board[BAR].RedPawns);
     }
 }
 
-void Redhome(Pawns Board[]) {
-    int x = 32;
-    int y = 7;
-
-    for (int i = 19; i <= 24; ++i) {
-        int ToPrint = 0;
-
-        if (Board[i].WhitePawns > 0) {
-            ToPrint = Board[i].WhitePawns;
-            textcolor(COLORTWO);
-        }
-        else if (Board[i].RedPawns > 0) {
-            ToPrint = Board[i].RedPawns;
-            textcolor(COLORONE);
-        }
-
-        int limit = (ToPrint < 6) ? ToPrint : 6;
-
-        for (int j = 0; j < limit; ++j) {
-            gotoxy(x, y);
-            printf("XX\n");
-            y++;
-        }
-
-        for (int j = 0; j < 6 - ToPrint; ++j) {
-            textcolor(BASECOLOR);
-            gotoxy(x, y);
-            printf("\\/\n");
-            y++;
-        }
-
-        gotoxy(x, y);
-        printf("N%d", ToPrint);
-        textcolor(BASECOLOR);
-        x += 4;
-        y -= 6;
-    }
+// Draw pawns that have been borne off
+void DrawCourtState(Pawns Board[]) {
+    gotoxy(POS_X_SIDEBAR, POS_Y_COURT_R);
+    printf(ANSI_RED_PAWN "Red Court: %d" ANSI_RESET, Board[COURT].RedPawns);
+    gotoxy(POS_X_SIDEBAR, POS_Y_COURT_W);
+    printf(ANSI_WHT_PAWN "Wht Court: %d" ANSI_RESET, Board[COURT].WhitePawns);
 }
 
-void LeftTop(Pawns Board[]) {
-    int x = 4;
-    int y = 7;
-
-    for (int i = 13; i <= 18; ++i) {
-        int ToPrint = 0;
-
-        if (Board[i].WhitePawns > 0) {
-            ToPrint = Board[i].WhitePawns;
-            textcolor(COLORTWO);
-        }
-        else if (Board[i].RedPawns > 0) {
-            ToPrint = Board[i].RedPawns;
-            textcolor(COLORONE);
-        }
-
-        int limit = (ToPrint < 6) ? ToPrint : 6;
-
-        for (int j = 0; j < limit; ++j) {
-            gotoxy(x, y);
-            printf("XX\n");
-            y++;
-        }
-
-        for (int j = 0; j < 6 - ToPrint; ++j) {
-            textcolor(BASECOLOR);
-            gotoxy(x, y);
-            printf("\\/\n");
-            y++;
-        }
-
-        gotoxy(x, y);
-        printf("N%d", ToPrint);
-        textcolor(BASECOLOR);
-        x += 4;
-        y -= 6;
-    }
-}
-
-void LeftDown(Pawns Board[]) {
-    int x = 4;
-    int y = 21;
-
-    for (int i = 12; i >= 7; --i) {
-        int ToPrint = 0;
-
-        if (Board[i].WhitePawns > 0) {
-            ToPrint = Board[i].WhitePawns;
-            textcolor(COLORTWO);
-        }
-        else if (Board[i].RedPawns > 0) {
-            ToPrint = Board[i].RedPawns;
-            textcolor(COLORONE);
-        }
-
-        int limit = (ToPrint < 6) ? ToPrint : 6;
-
-        for (int j = 0; j < limit; ++j) {
-            gotoxy(x, y);
-            printf("XX\n");
-            y--;
-        }
-
-        for (int j = 0; j < 6 - ToPrint; ++j) {
-            textcolor(BASECOLOR);
-            gotoxy(x, y);
-            printf("/\\\n");
-            y--;
-        }
-
-        gotoxy(x, y);
-        printf("N%d", ToPrint);
-        textcolor(BASECOLOR);
-        x += 4;
-        y += 6;
-    }
-}
-
-void DrawBorders() {
-    gotoxy(1, 5);
-    printf("   13  14  15  16  17  18  XX  19  20  21  22  23  24   ");
-
-    gotoxy(3, 6);
-    printf("====================================================");
-
-    gotoxy(3, 22);
-    printf("====================================================");
-
-    gotoxy(1, 23);
-    printf("   12  11  10  #9  #8  #7  XX  #6  #5  #4  #3  #2  #1   ");
-}
-
-// Renders the board combining all elements
+// Render complete board
 void drawboard(Pawns Board[]) {
-    DrawBar(Board);
-    DrawCourt(Board);
-    WhiteHome(Board);
-    Redhome(Board);
-    LeftTop(Board);
-    LeftDown(Board);
-    DrawBorders();
+    DrawTopHalf(Board);
+    DrawBottomHalf(Board);
+    DrawBarState(Board);
+    DrawCourtState(Board);
 
-    int x = 1;
-    int y = 6;
-    for (int i = 0; i < 17; ++i) {
-        gotoxy(x, y);
-        printf("::");
-        y++;
-    }
-
-    x = 55;
-    y = 6;
-    for (int i = 0; i < 17; ++i) {
-        gotoxy(x, y);
-        printf("::");
-        y++;
-    }
+    gotoxy(POS_X_PROMPT, POS_Y_PROMPT);
 }

@@ -6,13 +6,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <windows.h>
+
 using namespace std;
 
 
-
+void EnableANSI() {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) {
+        return;
+    }
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode)) {
+        return;
+    }
+    dwMode |= 0x0004;
+    SetConsoleMode(hOut, dwMode);
+}
 
 
 int main() {
+    EnableANSI();
     textcolor(BASECOLOR);
     Pawns Board[MAXFIELDS + 1];
     srand(time(NULL));
@@ -24,7 +38,7 @@ int main() {
     int* WP = &Ws;
     int* RP = &Rs;
     while (!X) {
-        K = getchar();
+        K = getch();
         int player = 0;
         switch (K) {
         case 'p':
