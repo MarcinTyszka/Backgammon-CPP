@@ -4,12 +4,12 @@ A fully functional, feature-rich terminal implementation of the classic Backgamm
 
 ## Screenshots
 
-*(Replace the links below with actual paths to your images once uploaded to the repository)*
-
 ![Main Menu / Title Screen](titlescrn.png)
+
 *Main Title Screen*
 
 ![Gameplay Board](gameplayscrn.png)
+
 *In-game board with ANSI colors and custom UI*
 
 ---
